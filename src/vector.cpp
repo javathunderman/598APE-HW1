@@ -82,10 +82,17 @@ Vector Vector::normalize(){
 
   
 Vector solveScalers(Vector v1, Vector v2, Vector v3, Vector C){
-   double denom = v1.z*v2.y*v3.x-v1.y*v2.z*v3.x-v1.z*v2.x*v3.y+v1.x*v2.z*v3.y+v1.y*v2.x*v3.z-v1.x*v2.y*v3.z;
+   double z1y2 = v1.z*v2.y;
+   double y1z2 = v1.y*v2.z;
+   double z1x2 = v1.z*v2.x;
+   double x1z2 = v1.x*v2.z;
+   double y1x2 = v1.y*v2.x;
+   double x1y2 = v1.x*v2.y;
+   double denom = v3.x * z1y2 - v3.x * y1z2 - v3.y * z1x2 + v3.y * x1z2 + v3.z * y1x2 - v3.z * x1y2;
+
    double a = C.z*v2.y*v3.x-C.y*v2.z*v3.x-C.z*v2.x*v3.y+C.x*v2.z*v3.y+C.y*v2.x*v3.z-C.x*v2.y*v3.z;
    double b = -C.z*v1.y*v3.x+C.y*v1.z*v3.x+C.z*v1.x*v3.y-C.x*v1.z*v3.y-C.y*v1.x*v3.z+C.x*v1.y*v3.z;
-   double c = C.z*v1.y*v2.x-C.y*v1.z*v2.x-C.z*v1.x*v2.y+C.x*v1.z*v2.y+C.y*v1.x*v2.z-C.x*v1.y*v2.z;
+   double c = C.z*y1x2 - C.y*z1x2 - C.z*x1y2+ C.x*z1y2 + C.y*x1z2 - C.x*y1z2;
    return Vector(a/denom, b/denom, c/denom);
 }
 
