@@ -60,7 +60,7 @@ void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
       seen ++;
       t = t->next;
    }
-   // insertionSort(times, seen);
+   insertionSort(times, seen);
 
    if (seen == 0 || times[0].time == inf) {
       double opacity, reflection, ambient;
