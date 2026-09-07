@@ -50,21 +50,18 @@ void insertionSort(TimeAndShape *arr, int n) {
 
 void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
    ShapeNode* t = c->listStart;
-   TimeAndShape *times = (TimeAndShape*)malloc(0);
    size_t seen = 0;
-   while(t!=NULL){
-      double time = t->data->getIntersection(ray);
-
-      TimeAndShape *times2 = (TimeAndShape*)malloc(sizeof(TimeAndShape)*(seen + 1));
-      for (int i=0; i<seen; i++)
-         times2[i] = times[i];
-      times2[seen] = (TimeAndShape){ time, t->data };
-      free(times);
-      times = times2;
+   double time;
+   unsigned int numShapes = c->numShapes;
+   TimeAndShape *times = (TimeAndShape*)malloc(sizeof(TimeAndShape)*numShapes);
+   for (unsigned int i = 0; i < numShapes; i++) {
+      time = t->data->getIntersection(ray);
+      times[seen] = (TimeAndShape){ time, t->data };
       seen ++;
       t = t->next;
    }
-   insertionSort(times, seen);
+   // insertionSort(times, seen);
+
    if (seen == 0 || times[0].time == inf) {
       double opacity, reflection, ambient;
       Vector temp = ray.vector.normalize();

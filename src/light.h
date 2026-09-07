@@ -31,6 +31,7 @@ public:
    unsigned int depth;
    ShapeNode *listStart, *listEnd;
    LightNode *lightStart, *lightEnd;
+   unsigned int numShapes;
    Autonoma(const Camera &c);
    Autonoma(const Camera &c, Texture* tex);
    void addShape(Shape* s);

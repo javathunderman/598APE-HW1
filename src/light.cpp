@@ -22,6 +22,7 @@ Autonoma::Autonoma(const Camera& c): camera(c){
    lightEnd = NULL;
    depth = 10;
    skybox = BLACK;
+   numShapes = 0;
 }
 
 Autonoma::Autonoma(const Camera& c, Texture* tex): camera(c){
@@ -31,12 +32,14 @@ Autonoma::Autonoma(const Camera& c, Texture* tex): camera(c){
    lightEnd = NULL;
    depth = 10;
    skybox = tex;
+   numShapes = 0;
 }
 
 void Autonoma::addShape(Shape* r){
    ShapeNode* hi = (ShapeNode*)malloc(sizeof(ShapeNode));
    hi->data = r;
    hi->next = hi->prev = NULL;
+   numShapes++;
    if(listStart==NULL){
       listStart = listEnd = hi;
    }
@@ -67,6 +70,7 @@ void Autonoma::removeShape(ShapeNode* s){
       aft->prev = b4;
    }
    free(s);
+   numShapes--;
 }
 
 void Autonoma::addLight(Light* r){
