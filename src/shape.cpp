@@ -1,4 +1,5 @@
 #include "shape.h"
+#include <iostream>
 
 Shape::Shape(const Vector &c, Texture* t, double ya, double pi, double ro): center(c), texture(t), yaw(ya), pitch(pi), roll(ro){
 };
@@ -54,10 +55,9 @@ void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
    double time;
    unsigned int numShapes = c->numShapes;
    TimeAndShape *times = (TimeAndShape*)malloc(sizeof(TimeAndShape)*numShapes);
-   for (unsigned int i = 0; i < numShapes; i++) {
+   for (seen = 0; seen < numShapes; seen++) {
       time = t->data->getIntersection(ray);
       times[seen] = (TimeAndShape){ time, t->data };
-      seen ++;
       t = t->next;
    }
    insertionSort(times, seen);
