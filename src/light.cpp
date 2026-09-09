@@ -23,6 +23,7 @@ Autonoma::Autonoma(const Camera& c): camera(c){
    depth = 10;
    skybox = BLACK;
    numShapes = 0;
+   numLights = 0;
 }
 
 Autonoma::Autonoma(const Camera& c, Texture* tex): camera(c){
@@ -33,6 +34,7 @@ Autonoma::Autonoma(const Camera& c, Texture* tex): camera(c){
    depth = 10;
    skybox = tex;
    numShapes = 0;
+   numLights = 0;
 }
 
 void Autonoma::addShape(Shape* r){
@@ -85,6 +87,7 @@ void Autonoma::addLight(Light* r){
       hi->prev = lightEnd;
       lightEnd = hi;
    }
+   numLights++;
 }
 
 void Autonoma::removeLight(LightNode* s){
@@ -107,12 +110,16 @@ void Autonoma::removeLight(LightNode* s){
       aft->prev = b4;
    }
    free(s);
+   numLights--;
 }
 
 void getLight(double* tColor, Autonoma* aut, Vector point, Vector norm, unsigned char flip){
    tColor[0] = tColor[1] = tColor[2] = 0.;
    LightNode *t = aut->lightStart;
-   while(t!=NULL){
+   unsigned int numLights = aut->numLights;
+   unsigned int numShapes = aut->numShapes;
+   #pragma omp parallel for
+   for (unsigned int i = 0; i < numLights; i++) {
       double lightColor[3];     
       lightColor[0] = t->data->color[0]/255.;
       lightColor[1] = t->data->color[1]/255.;
@@ -120,18 +127,20 @@ void getLight(double* tColor, Autonoma* aut, Vector point, Vector norm, unsigned
       Vector ra = t->data->center-point;
       ShapeNode* shapeIter = aut->listStart;
       bool hit = false;
-      while(!hit && shapeIter!=NULL){
-        hit = shapeIter->data->getLightIntersection(Ray(point+ra*.01, ra), lightColor);
+      Vector new_pt = point+ra*.01;
+      for (unsigned int j = 0; j < numShapes; j++) {
+         if (shapeIter->data->getLightIntersection(Ray(new_pt, ra), lightColor))
+            hit = true;
          shapeIter = shapeIter->next;
       }
       double perc = (norm.dot(ra)/(ra.mag()*norm.mag()));
       if(!hit){
       if(flip && perc<0) perc=-perc;
         if(perc>0){
-      
-         tColor[0]+= perc*(lightColor[0]);
-         tColor[1]+= perc*(lightColor[0]);
-         tColor[2]+= perc*(lightColor[0]);
+         double temp = perc*(lightColor[0]);
+         tColor[0]+= temp;
+         tColor[1]+= temp;
+         tColor[2]+= temp;
          if(tColor[0]>1.) tColor[0] = 1.;
          if(tColor[1]>1.) tColor[1] = 1.;
          if(tColor[2]>1.) tColor[2] = 1.;

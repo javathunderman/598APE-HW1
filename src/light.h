@@ -32,6 +32,7 @@ public:
    ShapeNode *listStart, *listEnd;
    LightNode *lightStart, *lightEnd;
    unsigned int numShapes;
+   unsigned int numLights;
    Autonoma(const Camera &c);
    Autonoma(const Camera &c, Texture* tex);
    void addShape(Shape* s);
