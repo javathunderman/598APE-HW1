@@ -118,7 +118,7 @@ void getLight(double* tColor, Autonoma* aut, Vector point, Vector norm, unsigned
    LightNode *t = aut->lightStart;
    unsigned int numLights = aut->numLights;
    unsigned int numShapes = aut->numShapes;
-   #pragma omp parallel for
+  
    for (unsigned int i = 0; i < numLights; i++) {
       double lightColor[3];     
       lightColor[0] = t->data->color[0]/255.;
