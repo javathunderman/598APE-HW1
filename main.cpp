@@ -338,44 +338,29 @@ Autonoma* createInputs(const char* inputFile) {
    return MAIN_DATA;
 }
 
-double identity(double x, double from, double to) {
-   return (1 - x) * from + x * to;
-}
-double expfn(double x, double from, double to) {
-   return (to - from) * exp(10 * x) / exp(10) + from;
-}
-double sinfn(double x, double from, double to) {
-   return (to - from) * sin(x * 6.28) + from;
-}
-double cosfn(double x, double from, double to) {
-   return (to - from) * cos(x * 6.28) + from;
-}
-
 void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frameLen) {
    if (animateFile) {
       char object_type[80];
       char transition_type[80];
       int obj_num;
       char field_type[80];
-      double from;
-      double to;
+      double from, to, result, x;
       FILE* f = fopen(animateFile, "r");
       while (lscanf(f, "%s %s %d %s %lf %lf", transition_type, object_type, &obj_num, field_type, &from, &to) != EOF) {
-         double (*func)(double, double, double);
+         x = (double)frame / frameLen;
+         
          if (streq(transition_type, "linear")) {
-            func = identity;
+            result = (1 - x) * from + x * to;
          } else if (streq(transition_type, "exp")) {
-            func = expfn;
+            result = (to - from) * exp(10 * x) / exp(10) + from;
          } else if (streq(transition_type, "sin")) {
-            func = sinfn;
+            result = (to - from) * sin(x * 6.28) + from;
          } else if (streq(transition_type, "cos")) {
-            func = cosfn;
+            result = (to - from) * cos(x * 6.28) + from;
          } else {
             printf("Unknown transition type %s, expected one of linear, exp, cos, or sin\n", transition_type);
             exit(1);
          }
-         double result = func((double)frame / frameLen, from, to);
-
          if (streq(object_type, "camera")) {
             if (streq(field_type, "yaw")) {
                MAIN_DATA->camera.setYaw(result);
