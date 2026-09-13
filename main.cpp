@@ -14,9 +14,32 @@
 #include <string.h>
 #include <iostream>
 #include <omp.h>
+#include <unordered_map>
+#include <string>
 using namespace std;
 
 #include <sys/time.h>
+enum class T_Type {
+   Linear = 0,
+   Exp = 1, 
+   Cos = 2, 
+   Sin = 3
+};
+
+enum class F_Type {
+   Yaw = 0, 
+   Pitch = 1, 
+   Roll = 2, 
+   X = 3,
+   Y = 4, 
+   Z = 5,
+   MapX = 6,
+   MapY = 7,
+   MapXOff = 8,
+   MapYOff = 9,
+   TextureX = 10,
+   TextureY = 11
+};
 
 float tdiff(struct timeval *start, struct timeval *end) {
   return (end->tv_sec-start->tv_sec) + 1e-6*(end->tv_usec-start->tv_usec);
@@ -347,19 +370,42 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
       double from, to, result, x;
       FILE* f = fopen(animateFile, "r");
       std::string t_type = transition_type;
+      std::unordered_map<std::string, T_Type> transition_type_map;
+      std::unordered_map<std::string, F_Type> field_type_map;
+      transition_type_map = {
+            {"linear", T_Type::Linear},
+            {"exp", T_Type::Exp},
+            {"cos", T_Type::Cos},
+            {"sin", T_Type::Sin},
+      };
+
+      field_type_map = {
+            {"yaw", F_Type::Yaw},
+            {"pitch", F_Type::Pitch},
+            {"roll", F_Type::Roll},
+            {"x", F_Type::X},
+            {"y", F_Type::Y},
+            {"z", F_Type::Z},
+            {"mapX", F_Type::MapX},
+            {"mapY", F_Type::MapY},
+            {"mapXOff", F_Type::MapXOff},
+            {"mapYOff", F_Type::MapYOff},
+            {"textureX", F_Type::TextureX},
+            {"textureY", F_Type::TextureY}
+      };
       while (lscanf(f, "%s %s %d %s %lf %lf", transition_type, object_type, &obj_num, field_type, &from, &to) != EOF) {
          x = (double)frame / frameLen;
-         switch (t_type) {
-            case "linear":
+         switch (transition_type_map[t_type]) {
+            case T_Type::Linear:
                result = (1 - x) * from + x * to;
                break;
-            case "exp":
+            case T_Type::Exp:
                result = (to - from) * exp(10 * x) / exp(10) + from;
                break;
-            case "sin":
+            case T_Type::Sin:
                result = (to - from) * sin(x * 6.28) + from;
                break;
-            case "cos":
+            case T_Type::Cos:
                result = (to - from) * cos(x * 6.28) + from;
                break;
             default:
@@ -368,23 +414,23 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
          }
          std::string f_type = field_type;
          if (streq(object_type, "camera")) {
-            switch ((f_type)) {
-               case "yaw":
+            switch (field_type_map[f_type]) {
+               case F_Type::Yaw:
                   MAIN_DATA->camera.setYaw(result);
                   break;
-               case "pitch":
+               case F_Type::Pitch:
                   MAIN_DATA->camera.setPitch(result);
                   break;
-               case "roll":
+               case F_Type::Roll:
                   MAIN_DATA->camera.setRoll(result);
                   break;
-               case "x":
+               case F_Type::X:
                   MAIN_DATA->camera.focus.x = result;
                   break;
-               case "y":
+               case F_Type::Y:
                   MAIN_DATA->camera.focus.y = result;
                   break;
-               case "z":
+               case F_Type::Z:
                   MAIN_DATA->camera.focus.z = result;
                   break;
                default:
@@ -403,32 +449,32 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
                node = node->next;
             }
             Shape* shape = node->data;
-            switch (f_type)) {
-               case "yaw"):
+            switch (field_type_map[f_type]) {
+               case F_Type::Yaw:
                   shape->setYaw(result);
                   break;
-               case "pitch"):
+               case F_Type::Pitch:
                   shape->setPitch(result);
                   break;
-               case "roll"):
+               case F_Type::Roll:
                   shape->setRoll(result);
                   break;
-               case "textureX"):
+               case F_Type::TextureX:
                   shape->textureX = result;
                   break;
-               case "textureY"):
+               case F_Type::TextureY:
                   shape->textureY = result;
                   break;
-               case "mapX"):
+               case F_Type::MapX:
                   shape->mapX = result;
                   break;
-               case "mapY"):
+               case F_Type::MapY:
                   shape->mapY = result;
                   break;
-               case "mapOffX"):
+               case F_Type::MapXOff:
                   shape->mapOffX = result;
                   break;
-               case "mapOffY"):
+               case F_Type::MapYOff:
                   shape->mapOffY = result;
                   break;
                default:
