@@ -346,37 +346,50 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
       char field_type[80];
       double from, to, result, x;
       FILE* f = fopen(animateFile, "r");
+      std::string t_type = transition_type;
       while (lscanf(f, "%s %s %d %s %lf %lf", transition_type, object_type, &obj_num, field_type, &from, &to) != EOF) {
          x = (double)frame / frameLen;
-         
-         if (streq(transition_type, "linear")) {
-            result = (1 - x) * from + x * to;
-         } else if (streq(transition_type, "exp")) {
-            result = (to - from) * exp(10 * x) / exp(10) + from;
-         } else if (streq(transition_type, "sin")) {
-            result = (to - from) * sin(x * 6.28) + from;
-         } else if (streq(transition_type, "cos")) {
-            result = (to - from) * cos(x * 6.28) + from;
-         } else {
-            printf("Unknown transition type %s, expected one of linear, exp, cos, or sin\n", transition_type);
-            exit(1);
-         }
-         if (streq(object_type, "camera")) {
-            if (streq(field_type, "yaw")) {
-               MAIN_DATA->camera.setYaw(result);
-            } else if (streq(field_type, "pitch")) {
-               MAIN_DATA->camera.setPitch(result);
-            } else if (streq(field_type, "roll")) {
-               MAIN_DATA->camera.setRoll(result);
-            } else if (streq(field_type, "x")) {
-               MAIN_DATA->camera.focus.x = result;
-            } else if (streq(field_type, "y")) {
-               MAIN_DATA->camera.focus.y = result;
-            } else if (streq(field_type, "z")) {
-               MAIN_DATA->camera.focus.z = result;
-            } else {
-               printf("Unknown camera field_type %s, expected one of yaw, pitch, roll, x, y, z\n", field_type);
+         switch (t_type) {
+            case "linear":
+               result = (1 - x) * from + x * to;
+               break;
+            case "exp":
+               result = (to - from) * exp(10 * x) / exp(10) + from;
+               break;
+            case "sin":
+               result = (to - from) * sin(x * 6.28) + from;
+               break;
+            case "cos":
+               result = (to - from) * cos(x * 6.28) + from;
+               break;
+            default:
+               printf("Unknown transition type %s, expected one of linear, exp, cos, or sin\n", transition_type);
                exit(1);
+         }
+         std::string f_type = field_type;
+         if (streq(object_type, "camera")) {
+            switch ((f_type)) {
+               case "yaw":
+                  MAIN_DATA->camera.setYaw(result);
+                  break;
+               case "pitch":
+                  MAIN_DATA->camera.setPitch(result);
+                  break;
+               case "roll":
+                  MAIN_DATA->camera.setRoll(result);
+                  break;
+               case "x":
+                  MAIN_DATA->camera.focus.x = result;
+                  break;
+               case "y":
+                  MAIN_DATA->camera.focus.y = result;
+                  break;
+               case "z":
+                  MAIN_DATA->camera.focus.z = result;
+                  break;
+               default:
+                  printf("Unknown camera field_type %s, expected one of yaw, pitch, roll, x, y, z\n", field_type);
+                  exit(1);
             }
          } else if (streq(object_type, "object")) {
             ShapeNode* node = MAIN_DATA->listStart;
@@ -390,28 +403,37 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
                node = node->next;
             }
             Shape* shape = node->data;
-
-            if (streq(field_type, "yaw")) {
-               shape->setYaw(result);
-            } else if (streq(field_type, "pitch")) {
-               shape->setPitch(result);
-            } else if (streq(field_type, "roll")) {
-               shape->setRoll(result);
-            } else if (streq(field_type, "textureX")) {
-               shape->textureX = result;
-            } else if (streq(field_type, "textureY")) {
-               shape->textureY = result;
-            } else if (streq(field_type, "mapX")) {
-               shape->mapX = result;
-            } else if (streq(field_type, "mapY")) {
-               shape->mapY = result;
-            } else if (streq(field_type, "mapOffX")) {
-               shape->mapOffX = result;
-            } else if (streq(field_type, "mapOffY")) {
-               shape->mapOffY = result;
-            } else {
-               printf("Unknown shape field_type %s, expected one of yaw, pitch, roll, textureX, textureY, mapX, mapY, mapOffX, mapOffY\n", field_type);
-               exit(1);
+            switch (f_type)) {
+               case "yaw"):
+                  shape->setYaw(result);
+                  break;
+               case "pitch"):
+                  shape->setPitch(result);
+                  break;
+               case "roll"):
+                  shape->setRoll(result);
+                  break;
+               case "textureX"):
+                  shape->textureX = result;
+                  break;
+               case "textureY"):
+                  shape->textureY = result;
+                  break;
+               case "mapX"):
+                  shape->mapX = result;
+                  break;
+               case "mapY"):
+                  shape->mapY = result;
+                  break;
+               case "mapOffX"):
+                  shape->mapOffX = result;
+                  break;
+               case "mapOffY"):
+                  shape->mapOffY = result;
+                  break;
+               default:
+                  printf("Unknown shape field_type %s, expected one of yaw, pitch, roll, textureX, textureY, mapX, mapY, mapOffX, mapOffY\n", field_type);
+                  exit(1);
             }
          } else {
             printf("Unknown object_type %s, expected one of camera, object\n", field_type);
@@ -424,7 +446,6 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
 }
 
 int main(int argc, const char** argv){
-
    int frameLen = 1;
    const char* inFile = NULL;
    const char* animateFile = NULL;

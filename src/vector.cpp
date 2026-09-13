@@ -3,7 +3,6 @@
 #include<limits>
 #include<math.h>
 #include<stdlib.h>
-//#include <printf.h>
 #include <stddef.h>
 #include "vector.h"
 
@@ -80,7 +79,6 @@ Vector Vector::normalize(){
    return Vector(x/m, y/m, z/m); 
 }
 
-  
 Vector solveScalers(Vector v1, Vector v2, Vector v3, Vector C){
    double z1y2 = v1.z*v2.y;
    double y1z2 = v1.y*v2.z;
