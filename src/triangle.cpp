@@ -39,7 +39,10 @@ Triangle::Triangle(Vector c, Vector b, Vector a, Texture* t):Plane(Vector(0,0,0)
 }
 
 double Triangle::getIntersection(Ray ray){
-   double time = Plane::getIntersection(ray);
+   const double t = ray.vector.dot(vect);
+   const double norm = vect.dot(ray.point)+d;
+   const double r = -norm/t;
+   double time = (r>0)?r:inf;
    if(time==inf) 
       return time;
    Vector dist = solveScalers(right, up, vect, ray.point+ray.vector*time-center); 
