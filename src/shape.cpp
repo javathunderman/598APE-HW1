@@ -1,4 +1,5 @@
 #include "shape.h"
+#include "Textures/texture.h"
 #include <vector>
 #include <algorithm>
 #include <array>
