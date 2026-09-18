@@ -49,12 +49,10 @@ void insertionSort(TimeAndShape *arr, int n) {
     }
 }
 
-void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
+void recursiveCalcColor(unsigned char* toFill, Autonoma* c, Ray ray, unsigned int depth, TimeAndShape* times, unsigned int numShapes){
    ShapeNode* t = c->listStart;
    size_t seen = 0;
    double time;
-   unsigned int numShapes = c->numShapes;
-   TimeAndShape *times = (TimeAndShape*)malloc(sizeof(TimeAndShape)*numShapes);
    for (seen = 0; seen < numShapes; seen++) {
       time = t->data->getIntersection(ray);
       times[seen] = (TimeAndShape){ time, t->data };
@@ -67,7 +65,7 @@ void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
       Vector temp = ray.vector.normalize();
       const double x = temp.x;
       const double z = temp.z;
-      const double me = (temp.y<0)?-temp.y:temp.y;
+      const double me = abs(temp.y);
       const double angle = atan2(z, x);
       c->skybox->getColor(toFill, &ambient, &opacity, &reflection, fix(angle/M_TWO_PI),fix(me));
       return;
@@ -75,7 +73,6 @@ void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
 
    double curTime = times[0].time;
    Shape* curShape = times[0].shape;
-   free(times);
 
    Vector intersect = curTime*ray.vector+ray.point;
    double opacity, reflection, ambient;
@@ -90,7 +87,7 @@ void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
       unsigned char col[4];
       if(opacity<1-1e-6){
          Ray nextRay = Ray(intersect+ray.vector*1E-4, ray.vector);
-         calcColor(col, c, nextRay, depth+1);
+         recursiveCalcColor(col, c, nextRay, depth+1, times, numShapes);
          toFill[0]= (unsigned char)(toFill[0]*opacity+col[0]*(1-opacity));
          toFill[1]= (unsigned char)(toFill[1]*opacity+col[1]*(1-opacity));
          toFill[2]= (unsigned char)(toFill[2]*opacity+col[2]*(1-opacity));        
@@ -99,11 +96,18 @@ void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
          Vector norm = curShape->getNormal(intersect).normalize();
          Vector vec = ray.vector-2*norm*(norm.dot(ray.vector));
          Ray nextRay = Ray(intersect+vec*1E-4, vec);
-         calcColor(col, c, nextRay, depth+1);
+         recursiveCalcColor(col, c, nextRay, depth+1, times, numShapes);
       
          toFill[0]= (unsigned char)(toFill[0]*(1-reflection)+col[0]*(reflection));
          toFill[1]= (unsigned char)(toFill[1]*(1-reflection)+col[1]*(reflection));
          toFill[2]= (unsigned char)(toFill[2]*(1-reflection)+col[2]*(reflection));
       }
    }
+}
+
+void calcColor(unsigned char* toFill,Autonoma* c, Ray ray, unsigned int depth){
+   unsigned int numShapes = c->numShapes;
+   TimeAndShape *times = (TimeAndShape*)malloc(sizeof(TimeAndShape)*numShapes);
+   recursiveCalcColor(toFill, c, ray, depth, times, numShapes);
+   free(times);
 }
