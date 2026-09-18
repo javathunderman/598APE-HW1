@@ -72,7 +72,6 @@ void calcColor(unsigned char* toFill, Autonoma* c, Ray ray, unsigned int depth){
 
    double curTime = times[0].time;
    Shape* curShape = times[0].shape;
-   free(times);
 
    Vector intersect = curTime*ray.vector+ray.point;
    double opacity, reflection, ambient;
