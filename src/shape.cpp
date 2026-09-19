@@ -60,13 +60,17 @@ void calcColor(unsigned char* toFill, Autonoma* c, Ray ray, unsigned int depth){
    size_t seen = 0;
    double time;
    unsigned int numShapes = c->numShapes;
-   TimeAndShape *times = (TimeAndShape*)malloc(sizeof(TimeAndShape)*numShapes);
+   std::vector<TimeAndShape> times(numShapes);
    for (seen = 0; seen < numShapes; seen++) {
       time = t->data->getIntersection(ray);
       times[seen] = (TimeAndShape){ time, t->data };
       t = t->next;
    }
-   insertionSort(times, seen);
+   
+   std::sort(times.begin(), times.end(), [](const TimeAndShape &t1, const TimeAndShape &t2)
+   { 
+      return t1.time < t2.time;
+   });
 
    if (seen == 0 || times[0].time == inf) {
       double opacity, reflection, ambient;
