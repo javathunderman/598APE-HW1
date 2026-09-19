@@ -43,22 +43,30 @@ typedef struct {
    Shape* shape;
 } TimeAndShape;
 
+void insertionSort(TimeAndShape *arr, int n) {
+    for (int i = 1; i < n; ++i) {
+        TimeAndShape key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j].time > key.time) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+
 void calcColor(unsigned char* toFill, Autonoma* c, Ray ray, unsigned int depth){
    ShapeNode* t = c->listStart;
    size_t seen = 0;
    double time;
    unsigned int numShapes = c->numShapes;
-   std::vector<TimeAndShape> times;
-   times.reserve(numShapes);
+   TimeAndShape *times = (TimeAndShape*)malloc(sizeof(TimeAndShape)*numShapes);
    for (seen = 0; seen < numShapes; seen++) {
       time = t->data->getIntersection(ray);
-      times.push_back((TimeAndShape){ time, t->data });
+      times[seen] = (TimeAndShape){ time, t->data };
       t = t->next;
    }
-   std::sort(times.begin(), times.end(), [](const TimeAndShape &t1, const TimeAndShape &t2)
-   { 
-      return t1.time > t2.time;
-   });
+   insertionSort(times, seen);
 
    if (seen == 0 || times[0].time == inf) {
       double opacity, reflection, ambient;
