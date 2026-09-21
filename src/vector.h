@@ -84,5 +84,18 @@ int print_vector(FILE *stream, const struct printf_info *info, const void
 
 int print_vector_arginfo (const struct printf_info *info, size_t n, int 
 *argtypes);
+inline double Vector::mag2(){
+   return x*x+y*y+z*z; 
+}
+inline double Vector::mag(){
+   return sqrt(x*x+y*y+z*z); 
+}
+inline double Vector::dot(const Vector a){
+   return x*a.x+y*a.y+z*a.z;
+}
+inline Vector Vector::normalize(){
+   double m = mag();
+   return Vector(x/m, y/m, z/m); 
+}
 
 #endif
