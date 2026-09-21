@@ -537,11 +537,14 @@ int main(int argc, const char** argv){
    container->start = (AnimateData *) malloc(sizeof(AnimateData));
    AnimateData *curr = container->start;
    FILE *f = fopen(animateFile, "r");
-   while (lscanf(f, "%s %s %d %s %lf %lf", curr->transition_type, curr->object_type, &curr->obj_num, curr->field_type, &curr->from, &curr->to) != EOF) {
-      curr->next = (AnimateData *) malloc(sizeof(AnimateData));
-      curr = curr->next;
-      container->size++;
+   if (animateFile) {
+      while (lscanf(f, "%s %s %d %s %lf %lf", curr->transition_type, curr->object_type, &curr->obj_num, curr->field_type, &curr->from, &curr->to) != EOF) {
+         curr->next = (AnimateData *) malloc(sizeof(AnimateData));
+         curr = curr->next;
+         container->size++;
+      }
    }
+   
    for(frame = 0; frame<frameLen; frame++) {
       if (animateFile) {
          setFrame(container, MAIN_DATA, frame, frameLen);
