@@ -9,6 +9,7 @@
 #include "src/triangle.h"
 #include "src/Textures/imagetexture.h"
 #include "src/Textures/colortexture.h"
+#include <cstdio>
 #include<stdio.h>
 #include<stdlib.h>
 #include <string.h>
@@ -337,87 +338,95 @@ Autonoma* createInputs(const char* inputFile) {
 
    return MAIN_DATA;
 }
+typedef struct AnimateData {
+   char object_type[80];
+   char transition_type[80];
+   int obj_num;
+   char field_type[80];
+   double from;
+   double to;
+   struct AnimateData *next;
+} AnimateData;
 
-void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frameLen) {
-   if (animateFile) {
-      char object_type[80];
-      char transition_type[80];
-      int obj_num;
-      char field_type[80];
-      double from, to, result, x;
-      FILE* f = fopen(animateFile, "r");
-      while (lscanf(f, "%s %s %d %s %lf %lf", transition_type, object_type, &obj_num, field_type, &from, &to) != EOF) {
-         x = (double)frame / frameLen;
-         
-         if (streq(transition_type, "linear")) {
-            result = (1 - x) * from + x * to;
-         } else if (streq(transition_type, "exp")) {
-            result = (to - from) * exp(10 * x) / exp(10) + from;
-         } else if (streq(transition_type, "sin")) {
-            result = (to - from) * sin(x * 6.28) + from;
-         } else if (streq(transition_type, "cos")) {
-            result = (to - from) * cos(x * 6.28) + from;
-         } else {
-            printf("Unknown transition type %s, expected one of linear, exp, cos, or sin\n", transition_type);
-            exit(1);
-         }
-         if (streq(object_type, "camera")) {
-            if (streq(field_type, "yaw")) {
-               MAIN_DATA->camera.setYaw(result);
-            } else if (streq(field_type, "pitch")) {
-               MAIN_DATA->camera.setPitch(result);
-            } else if (streq(field_type, "roll")) {
-               MAIN_DATA->camera.setRoll(result);
-            } else if (streq(field_type, "x")) {
-               MAIN_DATA->camera.focus.x = result;
-            } else if (streq(field_type, "y")) {
-               MAIN_DATA->camera.focus.y = result;
-            } else if (streq(field_type, "z")) {
-               MAIN_DATA->camera.focus.z = result;
-            } else {
-               printf("Unknown camera field_type %s, expected one of yaw, pitch, roll, x, y, z\n", field_type);
-               exit(1);
-            }
-         } else if (streq(object_type, "object")) {
-            ShapeNode* node = MAIN_DATA->listStart;
-            for (int i=0; i<obj_num; i++) {
-               if (node == MAIN_DATA->listEnd) {
-                  printf("Could not find object number %d\n", obj_num);
-                  exit(1);
-               }
-               if (i == obj_num)
-                  break;
-               node = node->next;
-            }
-            Shape* shape = node->data;
+typedef struct AnimateDataContainer {
+   AnimateData *start;
+   unsigned int size;
+} AnimateDataContainer;
 
-            if (streq(field_type, "yaw")) {
-               shape->setYaw(result);
-            } else if (streq(field_type, "pitch")) {
-               shape->setPitch(result);
-            } else if (streq(field_type, "roll")) {
-               shape->setRoll(result);
-            } else if (streq(field_type, "textureX")) {
-               shape->textureX = result;
-            } else if (streq(field_type, "textureY")) {
-               shape->textureY = result;
-            } else if (streq(field_type, "mapX")) {
-               shape->mapX = result;
-            } else if (streq(field_type, "mapY")) {
-               shape->mapY = result;
-            } else if (streq(field_type, "mapOffX")) {
-               shape->mapOffX = result;
-            } else if (streq(field_type, "mapOffY")) {
-               shape->mapOffY = result;
-            } else {
-               printf("Unknown shape field_type %s, expected one of yaw, pitch, roll, textureX, textureY, mapX, mapY, mapOffX, mapOffY\n", field_type);
-               exit(1);
-            }
-         } else {
-            printf("Unknown object_type %s, expected one of camera, object\n", field_type);
-            exit(1);
-         }
+void setFrame(AnimateDataContainer *container, Autonoma* MAIN_DATA, int frame, int frameLen) {
+   AnimateData *curr = container->start;
+   for (int i = 0; i < container->size; i++) {
+      double result;
+      double x = (double)frame / frameLen;
+      if (streq(curr->transition_type, "linear")) {
+         result = (1 - x) * curr->from + x * curr->to;
+      } else if (streq(curr->transition_type, "exp")) {
+         result = (curr->to - curr->from) * exp(10 * x) / exp(10) + curr->from;
+      } else if (streq(curr->transition_type, "sin")) {
+         result = (curr->to - curr->from) * sin(x * 6.28) + curr->from;
+      } else if (streq(curr->transition_type, "cos")) {
+         result = (curr->to - curr->from) * cos(x * 6.28) + curr->from;
+      } else {
+         printf("Unknown transition type %s, expected one of linear, exp, cos, or sin\n", curr->transition_type);
+         exit(1);
       }
+      if (streq(curr->object_type, "camera")) {
+         if (streq(curr->field_type, "yaw")) {
+            MAIN_DATA->camera.setYaw(result);
+         } else if (streq(curr->field_type, "pitch")) {
+            MAIN_DATA->camera.setPitch(result);
+         } else if (streq(curr->field_type, "roll")) {
+            MAIN_DATA->camera.setRoll(result);
+         } else if (streq(curr->field_type, "x")) {
+            MAIN_DATA->camera.focus.x = result;
+         } else if (streq(curr->field_type, "y")) {
+            MAIN_DATA->camera.focus.y = result;
+         } else if (streq(curr->field_type, "z")) {
+            MAIN_DATA->camera.focus.z = result;
+         } else {
+            printf("Unknown camera field_type %s, expected one of yaw, pitch, roll, x, y, z\n", curr->field_type);
+            exit(1);
+         }
+      } else if (streq(curr->object_type, "object")) {
+         ShapeNode* node = MAIN_DATA->listStart;
+         for (int i=0; i<curr->obj_num; i++) {
+            if (node == MAIN_DATA->listEnd) {
+               printf("Could not find object number %d\n", curr->obj_num);
+               exit(1);
+            }
+            if (i == curr->obj_num)
+               break;
+            node = node->next;
+         }
+         Shape* shape = node->data;
+
+         if (streq(curr->field_type, "yaw")) {
+            shape->setYaw(result);
+         } else if (streq(curr->field_type, "pitch")) {
+            shape->setPitch(result);
+         } else if (streq(curr->field_type, "roll")) {
+            shape->setRoll(result);
+         } else if (streq(curr->field_type, "textureX")) {
+            shape->textureX = result;
+         } else if (streq(curr->field_type, "textureY")) {
+            shape->textureY = result;
+         } else if (streq(curr->field_type, "mapX")) {
+            shape->mapX = result;
+         } else if (streq(curr->field_type, "mapY")) {
+            shape->mapY = result;
+         } else if (streq(curr->field_type, "mapOffX")) {
+            shape->mapOffX = result;
+         } else if (streq(curr->field_type, "mapOffY")) {
+            shape->mapOffY = result;
+         } else {
+            printf("Unknown shape field_type %s, expected one of yaw, pitch, roll, textureX, textureY, mapX, mapY, mapOffX, mapOffY\n", curr->field_type);
+            exit(1);
+         }
+      } else {
+         printf("Unknown object_type %s, expected one of camera, object\n", curr->field_type);
+         exit(1);
+      }
+      curr = curr->next;
    }
 
    refresh(MAIN_DATA);
@@ -523,8 +532,23 @@ int main(int argc, const char** argv){
    
   struct timeval start, end;
    gettimeofday(&start, NULL);
+   AnimateDataContainer *container = (AnimateDataContainer *) malloc(sizeof(AnimateDataContainer));
+   container->size = 0;
+   container->start = (AnimateData *) malloc(sizeof(AnimateData));
+   AnimateData *curr = container->start;
+   FILE *f = fopen(animateFile, "r");
+   while (lscanf(f, "%s %s %d %s %lf %lf", curr->transition_type, curr->object_type, &curr->obj_num, curr->field_type, &curr->from, &curr->to) != EOF) {
+      curr->next = (AnimateData *) malloc(sizeof(AnimateData));
+      curr = curr->next;
+      container->size++;
+   }
    for(frame = 0; frame<frameLen; frame++) {
-      setFrame(animateFile, MAIN_DATA, frame, frameLen);      
+      if (animateFile) {
+         setFrame(container, MAIN_DATA, frame, frameLen);
+      } else {
+         refresh(MAIN_DATA);
+      }
+      
       if (frameLen == 1) {
          snprintf(command, sizeof(command), "%s", outFile);    
       } else if (png) {
@@ -539,7 +563,21 @@ int main(int argc, const char** argv){
       }     
       printf("Done Frame %7d|\n", frame);
    }
+   curr = container->start;
+   
+   if (container->size == 1) {
+      free(container->start);
+   } else {
+      AnimateData* next = curr->next;
+      for (int i = 0; i < container->size; i++) {
+         free(curr);
+         curr = next;
+         next = curr->next;
+      }
+   }
+   free(container);
 
+   
    gettimeofday(&end, NULL);
    printf("Total time to create images=%0.6f seconds\n", tdiff(&start, &end));
 
