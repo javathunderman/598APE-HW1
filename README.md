@@ -1,5 +1,19 @@
 # 598APE-HW1
 
+PRONTO team submission (code as of commit: ddcf10007589933d7bf61c328b60c8efcb84eba5)
+
+Optimizations (with report section numbers): 
+- Loop work reduction (3.1, implemented in a84523a)
+- Reusing common subexpressions (3.2.1, implemented across various commits)
+- Multicore parallelism (3.3.1, first implemented in commit c4933f4)
+- AVX-512/Vectorization (3.3.2, first implemented in 22b06c) - this is implemented on a feature branch named "avx", not the main branch.
+- Inlining (3.3.3, implemented across various commits)
+- Switch/case replacement in main loop (3.4.1) - this is also implemented separately, on the "switch-case-new" branch. For recordkeeping, we have kept the original "switch-case" branch, but this lacks some of our subsequent optimizations and was not used in our profiling/analysis. 
+- Change to std::sort (3.4.2, implemented in 2da5e89)
+- File I/O speedups (3.4.3, implemented in ddcf100)
+
+This repository should compile in the provided Docker container, without additional dependencies. We tested and profiled this project on the CS VM farm, as well as on a desktop PC with an AMD Ryzen 7 9700X, and our lab research server (Hydra). 
+
 This repository contains code for homework 1 of 598APE.
 
 In particular, this repository is an implementation of a Raytracer.
