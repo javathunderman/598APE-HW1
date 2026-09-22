@@ -15,9 +15,31 @@
 #include <string.h>
 #include <iostream>
 #include <omp.h>
+#include <unordered_map>
 using namespace std;
 
 #include <sys/time.h>
+enum class T_Type {
+   Linear = 0,
+   Exp = 1, 
+   Cos = 2, 
+   Sin = 3
+};
+
+enum class F_Type {
+   Yaw = 0, 
+   Pitch = 1, 
+   Roll = 2, 
+   X = 3,
+   Y = 4, 
+   Z = 5,
+   MapX = 6,
+   MapY = 7,
+   MapXOff = 8,
+   MapYOff = 9,
+   TextureX = 10,
+   TextureY = 11
+};
 
 float tdiff(struct timeval *start, struct timeval *end) {
   return (end->tv_sec-start->tv_sec) + 1e-6*(end->tv_usec-start->tv_usec);
@@ -355,77 +377,125 @@ typedef struct AnimateDataContainer {
 
 void setFrame(AnimateDataContainer *container, Autonoma* MAIN_DATA, int frame, int frameLen) {
    AnimateData *curr = container->start;
+   
+      std::unordered_map<std::string, T_Type> transition_type_map;
+      std::unordered_map<std::string, F_Type> field_type_map;
+      transition_type_map = {
+            {"linear", T_Type::Linear},
+            {"exp", T_Type::Exp},
+            {"cos", T_Type::Cos},
+            {"sin", T_Type::Sin},
+      };
+
+      field_type_map = {
+            {"yaw", F_Type::Yaw},
+            {"pitch", F_Type::Pitch},
+            {"roll", F_Type::Roll},
+            {"x", F_Type::X},
+            {"y", F_Type::Y},
+            {"z", F_Type::Z},
+            {"mapX", F_Type::MapX},
+            {"mapY", F_Type::MapY},
+            {"mapXOff", F_Type::MapXOff},
+            {"mapYOff", F_Type::MapYOff},
+            {"textureX", F_Type::TextureX},
+            {"textureY", F_Type::TextureY}
+      };
    for (int i = 0; i < container->size; i++) {
       double result;
       double x = (double)frame / frameLen;
-      if (streq(curr->transition_type, "linear")) {
-         result = (1 - x) * curr->from + x * curr->to;
-      } else if (streq(curr->transition_type, "exp")) {
-         result = (curr->to - curr->from) * exp(10 * x) / exp(10) + curr->from;
-      } else if (streq(curr->transition_type, "sin")) {
-         result = (curr->to - curr->from) * sin(x * 6.28) + curr->from;
-      } else if (streq(curr->transition_type, "cos")) {
-         result = (curr->to - curr->from) * cos(x * 6.28) + curr->from;
-      } else {
-         printf("Unknown transition type %s, expected one of linear, exp, cos, or sin\n", curr->transition_type);
-         exit(1);
-      }
-      if (streq(curr->object_type, "camera")) {
-         if (streq(curr->field_type, "yaw")) {
-            MAIN_DATA->camera.setYaw(result);
-         } else if (streq(curr->field_type, "pitch")) {
-            MAIN_DATA->camera.setPitch(result);
-         } else if (streq(curr->field_type, "roll")) {
-            MAIN_DATA->camera.setRoll(result);
-         } else if (streq(curr->field_type, "x")) {
-            MAIN_DATA->camera.focus.x = result;
-         } else if (streq(curr->field_type, "y")) {
-            MAIN_DATA->camera.focus.y = result;
-         } else if (streq(curr->field_type, "z")) {
-            MAIN_DATA->camera.focus.z = result;
-         } else {
-            printf("Unknown camera field_type %s, expected one of yaw, pitch, roll, x, y, z\n", curr->field_type);
-            exit(1);
-         }
-      } else if (streq(curr->object_type, "object")) {
-         ShapeNode* node = MAIN_DATA->listStart;
-         for (int i=0; i<curr->obj_num; i++) {
-            if (node == MAIN_DATA->listEnd) {
-               printf("Could not find object number %d\n", curr->obj_num);
-               exit(1);
-            }
-            if (i == curr->obj_num)
+      std::string t_type = curr->transition_type;
+      x = (double)frame / frameLen;
+         switch (transition_type_map[t_type]) {
+            case T_Type::Linear:
+               result = (1 - x) * curr->from + x * curr->to;
                break;
-            node = node->next;
+            case T_Type::Exp:
+               result = (curr->to - curr->from) * exp(10 * x) / exp(10) + curr->from;
+               break;
+            case T_Type::Sin:
+               result = (curr->to - curr->from) * sin(x * 6.28) + curr->from;
+               break;
+            case T_Type::Cos:
+               result = (curr->to - curr->from) * cos(x * 6.28) + curr->from;
+               break;
+            default:
+               printf("Unknown transition type %s, expected one of linear, exp, cos, or sin\n", curr->transition_type);
+               exit(1);
          }
-         Shape* shape = node->data;
-
-         if (streq(curr->field_type, "yaw")) {
-            shape->setYaw(result);
-         } else if (streq(curr->field_type, "pitch")) {
-            shape->setPitch(result);
-         } else if (streq(curr->field_type, "roll")) {
-            shape->setRoll(result);
-         } else if (streq(curr->field_type, "textureX")) {
-            shape->textureX = result;
-         } else if (streq(curr->field_type, "textureY")) {
-            shape->textureY = result;
-         } else if (streq(curr->field_type, "mapX")) {
-            shape->mapX = result;
-         } else if (streq(curr->field_type, "mapY")) {
-            shape->mapY = result;
-         } else if (streq(curr->field_type, "mapOffX")) {
-            shape->mapOffX = result;
-         } else if (streq(curr->field_type, "mapOffY")) {
-            shape->mapOffY = result;
+         std::string f_type = curr->field_type;
+         if (streq(curr->object_type, "camera")) {
+            switch (field_type_map[f_type]) {
+               case F_Type::Yaw:
+                  MAIN_DATA->camera.setYaw(result);
+                  break;
+               case F_Type::Pitch:
+                  MAIN_DATA->camera.setPitch(result);
+                  break;
+               case F_Type::Roll:
+                  MAIN_DATA->camera.setRoll(result);
+                  break;
+               case F_Type::X:
+                  MAIN_DATA->camera.focus.x = result;
+                  break;
+               case F_Type::Y:
+                  MAIN_DATA->camera.focus.y = result;
+                  break;
+               case F_Type::Z:
+                  MAIN_DATA->camera.focus.z = result;
+                  break;
+               default:
+                  printf("Unknown camera field_type %s, expected one of yaw, pitch, roll, x, y, z\n", curr->field_type);
+                  exit(1);
+            }
+         } else if (streq(curr->object_type, "object")) {
+            ShapeNode* node = MAIN_DATA->listStart;
+            for (int i=0; i<curr->obj_num; i++) {
+               if (node == MAIN_DATA->listEnd) {
+                  printf("Could not find object number %d\n", curr->obj_num);
+                  exit(1);
+               }
+               if (i == curr->obj_num)
+                  break;
+               node = node->next;
+            }
+            Shape* shape = node->data;
+            switch (field_type_map[f_type]) {
+               case F_Type::Yaw:
+                  shape->setYaw(result);
+                  break;
+               case F_Type::Pitch:
+                  shape->setPitch(result);
+                  break;
+               case F_Type::Roll:
+                  shape->setRoll(result);
+                  break;
+               case F_Type::TextureX:
+                  shape->textureX = result;
+                  break;
+               case F_Type::TextureY:
+                  shape->textureY = result;
+                  break;
+               case F_Type::MapX:
+                  shape->mapX = result;
+                  break;
+               case F_Type::MapY:
+                  shape->mapY = result;
+                  break;
+               case F_Type::MapXOff:
+                  shape->mapOffX = result;
+                  break;
+               case F_Type::MapYOff:
+                  shape->mapOffY = result;
+                  break;
+               default:
+                  printf("Unknown shape field_type %s, expected one of yaw, pitch, roll, textureX, textureY, mapX, mapY, mapOffX, mapOffY\n", curr->field_type);
+                  exit(1);
+            }
          } else {
-            printf("Unknown shape field_type %s, expected one of yaw, pitch, roll, textureX, textureY, mapX, mapY, mapOffX, mapOffY\n", curr->field_type);
+            printf("Unknown object_type %s, expected one of camera, object\n", curr->field_type);
             exit(1);
          }
-      } else {
-         printf("Unknown object_type %s, expected one of camera, object\n", curr->field_type);
-         exit(1);
-      }
       curr = curr->next;
    }
 
