@@ -43,18 +43,6 @@ typedef struct {
    Shape* shape;
 } TimeAndShape;
 
-void insertionSort(TimeAndShape *arr, int n) {
-    for (int i = 1; i < n; ++i) {
-        TimeAndShape key = arr[i];
-        int j = i - 1;
-        while (j >= 0 && arr[j].time > key.time) {
-            arr[j + 1] = arr[j];
-            j = j - 1;
-        }
-        arr[j + 1] = key;
-    }
-}
-
 void calcColor(unsigned char* toFill, Autonoma* c, Ray ray, unsigned int depth){
    ShapeNode* t = c->listStart;
    size_t seen = 0;
@@ -67,12 +55,14 @@ void calcColor(unsigned char* toFill, Autonoma* c, Ray ray, unsigned int depth){
       t = t->next;
    }
    
-   std::sort(times.begin(), times.end(), [](const TimeAndShape &t1, const TimeAndShape &t2)
+   auto min_time = std::min_element(times.begin(), times.end(), [](const TimeAndShape &t1, const TimeAndShape &t2)
    { 
       return t1.time < t2.time;
    });
 
-   if (seen == 0 || times[0].time == inf) {
+   if (min_time == times.end())
+      return;
+   if (seen == 0 || (*min_time).time == inf) {
       double opacity, reflection, ambient;
       Vector temp = ray.vector.normalize();
       const double x = temp.x;
@@ -83,8 +73,8 @@ void calcColor(unsigned char* toFill, Autonoma* c, Ray ray, unsigned int depth){
       return;
    }
 
-   double curTime = times[0].time;
-   Shape* curShape = times[0].shape;
+   double curTime = (*min_time).time;
+   Shape* curShape = (*min_time).shape;
 
    Vector intersect = curTime*ray.vector+ray.point;
    double opacity, reflection, ambient;
