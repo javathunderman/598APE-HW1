@@ -14,6 +14,8 @@ Optimizations (with report section numbers):
 
 This repository should compile in the provided Docker container, without additional dependencies. We tested and profiled this project on the CS VM farm, as well as on a desktop PC with an AMD Ryzen 7 9700X, and our lab research server (Hydra). 
 
+For the higher resolution elephant run, you can use the full_elephant.ray file given under inputs/ with the same flags (e.g.: `./main.exe -i inputs/full_elephant.ray --ppm  -a inputs/elephant.animate --movie -F 24 -W 100 -H 100 -o output/sphere.mp4`). 
+
 This repository contains code for homework 1 of 598APE.
 
 In particular, this repository is an implementation of a Raytracer.
